@@ -1,34 +1,51 @@
-/* globals __DEV__ */
 import Phaser from 'phaser'
-import Mushroom from '../sprites/Mushroom'
-import {setResponsiveWidth} from '../utils'
+import Ball from '../sprites/Ball'
+import Player from '../sprites/Player'
+import { registerKeyboard } from '../controllers/keyboard'
+
+const playerStarts = [
+  { x: 600, y: 200, human: true },
+  { x: 200, y: 600 }
+]
+const ballStarts = [
+  { x: 600, y: 600 }
+]
 
 export default class extends Phaser.State {
   init () {}
   preload () {}
 
   create () {
-    let banner = this.add.text(this.game.world.centerX, this.game.height - 30, 'Phaser + ES6 + Webpack')
-    banner.font = 'Nunito'
-    banner.fontSize = 40
-    banner.fill = '#77BFA3'
-    banner.anchor.setTo(0.5)
+    this.players = []
+    this.balls = []
+    const team = []
 
-    this.mushroom = new Mushroom({
-      game: this.game,
-      x: this.game.world.centerX,
-      y: this.game.world.centerY,
-      asset: 'mushroom'
+    this.game.physics.startSystem(Phaser.Physics.ARCADE)
+    this.game.world.setBounds(0, 0, 2000, 2000)
+
+    //  This will run in Canvas mode, so let's gain a little speed and display
+    this.game.renderer.clearBeforeRender = false
+    this.game.renderer.roundPixels = true
+    this.game.physics.startSystem(Phaser.Physics.ARCADE)
+    this.game.world.setBounds(0, 0, 2000, 2000)
+
+    this.pitch = this.add.tileSprite(0, 0, 2000, 2000, 'pitch')
+    this.pitch.fixedToCamera = false
+    this.game.camera.deadzone = new Phaser.Rectangle(350, 250, 100, 100)
+
+    this.balls = ballStarts.map((ballStart) => {
+      const ball = new Ball(Object.assign({ game: this.game }, ballStart))
+      this.game.add.existing(ball)
+      return ball
+    })
+    this.players = playerStarts.map((playerStart) => {
+      const player = new Player(Object.assign({ game: this.game, balls: this.balls, team }, playerStart))
+      team.push(player)
+      this.game.add.existing(player)
+      return player
     })
 
-    // set the sprite width to 30% of the game width
-    setResponsiveWidth(this.mushroom, 30, this.game.world)
-    this.game.add.existing(this.mushroom)
-  }
-
-  render () {
-    if (__DEV__) {
-      this.game.debug.spriteInfo(this.mushroom, 32, 32)
-    }
+    // Set up the keyboard
+    registerKeyboard(this.game)
   }
 }
